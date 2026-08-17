@@ -26,7 +26,7 @@ class _LoginPageState extends State<LoginPage>{
     );
   }
 
-  void entrar(){
+  Future<void> entrar() async{
     String email = emailController.text.trim();
     String senha = senhaController.text;
 
@@ -36,37 +36,45 @@ class _LoginPageState extends State<LoginPage>{
       );
       return;
     }
+  bool carregando = false;
 
-    Map<String, String>? usuarioEncontrado;
+  setState(() {
+    carregando = true;
+  });
 
-    for(var usuario in usuarios){
-       if (
-        usuario['email'] == email && 
-        usuario['senha'] == senha
-       ){
-        usuarioEncontrado = usuario;
-        break;
-       }
-    }
+  final resultado = await ApiServices.login(
+    email: email,
+    senha: senha
+   );
+   setState(() {
+     carregando=false;
+   });
+   if(resultado['sucesso']==true){
+    // final dados = resultado['dados'];
+    final usuario = resultado['dados'] as Map<String, dynamic>;
 
-    if(usuarioEncontrado == null){
-      mostrarMensagem(
-      'Email ou senha incorretos.'
-      );
-      return;
-    }
-
-    String nome = usuarioEncontrado['nome'] ?? 'Usuário';
+    String nome = usuario['nome'] ?? "Usuário";
+    String emailUsuario = usuario['email'] ?? email;
 
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) => HomePage(
           nomeUsuario: nome,
-          emailusuario: email
+          emailusuario: emailUsuario
         ),
       ),
     );
+   }
+
+    if(resultado['sucesso'] == false){
+      mostrarMensagem(
+      'Email ou senha incorretos.'
+      );
+      return;
+    }
+
+
   }
 
   void abrirCadastro(){
